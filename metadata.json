@@ -1,5 +1,5 @@
 {
-  "name": "AI Object Estimator",
-  "description": "Estimate object dimensions and volume from images using a reference coin.",
-  "requestFramePermissions": []
+  "name": "AI 搬家估算系統",
+  "description": "透過 AI 影像辨識技術，自動估算傢俱體積與搬家所需車型。支援 A4 紙、悠遊卡、硬幣等比例尺，讓搬家估價更精準、更快速。",
+  "requestFramePermissions": ["camera"]
 }
