@@ -1,0 +1,5 @@
+{
+  "name": "AI Object Estimator",
+  "description": "Estimate object dimensions and volume from images using a reference coin.",
+  "requestFramePermissions": []
+}
