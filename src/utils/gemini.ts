@@ -27,6 +27,63 @@ export interface AnalysisData {
   reasoning: string;
 }
 
+export interface BoxContentsData {
+  items: string[];
+  summary: string;
+}
+
+export async function analyzeBoxContents(
+  base64Image: string,
+  mimeType: string,
+  onLog?: (message: string) => void
+): Promise<BoxContentsData> {
+  const model = "gemini-3-flash-preview";
+  onLog?.("正在分析內容物照片...");
+
+  const prompt = `
+    你是一個專業的物體識別助手。請分析這張照片，這是一張紙箱或容器內部的照片。
+    請列出你在照片中看到的所有物體清單。
+    
+    請以 JSON 格式回傳結果：
+    - items: 字串陣列，列出所有偵測到的物體名稱（請使用繁體中文）。
+    - summary: 一段簡短的總結，描述內容物的整體情況。
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: {
+        parts: [
+          { inlineData: { mimeType, data: base64Image } },
+          { text: prompt }
+        ]
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            items: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            summary: { type: Type.STRING }
+          },
+          required: ["items", "summary"]
+        }
+      }
+    });
+
+    if (response.text) {
+      return JSON.parse(response.text.trim()) as BoxContentsData;
+    }
+    throw new Error("無法取得分析結果");
+  } catch (error) {
+    console.error("Error analyzing box contents:", error);
+    throw error;
+  }
+}
+
 export async function analyzeImage(
   base64Image: string,
   mimeType: string,
@@ -63,10 +120,11 @@ export async function analyzeImage(
        - 輸出主要物體的長、寬、高（單位：公尺，保留 3 位小數）。
        - 輸出最終體積（單位：立方公尺）。
        - 標記是否為紙箱。
+       - **重要：如果偵測到的物體是紙箱，請將其名稱 (label) 統一設定為「紙箱」，不要包含額外的描述（如「衛生紙紙箱」或「大型主機電腦紙箱」）。**
     
     請以 JSON 格式回傳結果，包含以下欄位：
     - reference_object: 包含 label (例如 "A4 Paper", "Credit Card", 或 "Taiwan 10 NTD Coin") 和 box_2d ([ymin, xmin, ymax, xmax], 範圍 0-1000)。
-    - main_object: 包含 label (物體名稱，請務必使用繁體中文，例如「雙人床墊」、「單門冰箱」、「裝書紙箱」), box_2d ([ymin, xmin, ymax, xmax], 範圍 0-1000), dimensions_m (length, width, height), volume_m3, is_cardboard (boolean)。
+    - main_object: 包含 label (物體名稱，請務必使用繁體中文，例如「雙人床墊」、「單門冰箱」、「紙箱」), box_2d ([ymin, xmin, ymax, xmax], 範圍 0-1000), dimensions_m (length, width, height), volume_m3, is_cardboard (boolean)。
     - reasoning: 簡短說明你的估算邏輯，包含你使用了哪種參考物、如何處理透視變形、以及深度差異的校正。**請務必使用繁體中文回答。**
   `;
 

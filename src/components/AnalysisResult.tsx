@@ -1,11 +1,12 @@
-import { Box, Cuboid, Ruler } from "lucide-react";
-import { AnalysisData } from "../utils/gemini";
+import { Box, Cuboid, Ruler, ListChecks } from "lucide-react";
+import { AnalysisData, BoxContentsData } from "../utils/gemini";
 
 interface AnalysisResultProps {
   data: AnalysisData;
+  contents?: BoxContentsData;
 }
 
-export function AnalysisResult({ data }: AnalysisResultProps) {
+export function AnalysisResult({ data, contents }: AnalysisResultProps) {
   const { main_object, reference_object, reasoning } = data;
 
   return (
@@ -74,11 +75,32 @@ export function AnalysisResult({ data }: AnalysisResultProps) {
             <div className="h-px bg-slate-100" />
             <div className="p-3 bg-emerald-50 rounded-lg text-sm text-emerald-800">
               偵測到參考物，用於比例尺校準。
-              標準直徑：2.6 cm。
             </div>
           </div>
         </div>
       </div>
+
+      {/* Box Contents Card */}
+      {contents && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 animate-in zoom-in-95 duration-300">
+          <div className="flex items-center gap-2 mb-4 text-amber-600">
+            <ListChecks className="w-5 h-5" />
+            <h3 className="font-semibold text-lg">箱內物品清單</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {contents.items.map((item, idx) => (
+                <span key={idx} className="bg-amber-50 text-amber-800 px-3 py-1 rounded-full text-sm font-medium border border-amber-100">
+                  {item}
+                </span>
+              ))}
+            </div>
+            <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-500 italic">
+              {contents.summary}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reasoning Card */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">

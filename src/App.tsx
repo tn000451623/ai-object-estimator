@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { ImageUploader } from "./components/ImageUploader";
 import { AnalysisResult } from "./components/AnalysisResult";
-import { analyzeImage, AnalysisData } from "./utils/gemini";
+import { analyzeImage, AnalysisData, analyzeBoxContents, BoxContentsData } from "./utils/gemini";
 import { resizeImage } from "./utils/image";
-import { Loader2, RefreshCw, AlertCircle, Trash2, Plus, Box, Download } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, Trash2, Plus, Box, Download, Camera, ListChecks } from "lucide-react";
 import { cn } from "./lib/utils";
 
 interface AnalysisItem {
@@ -14,6 +14,8 @@ interface AnalysisItem {
   status: 'idle' | 'analyzing' | 'success' | 'error';
   error?: string;
   executionTime?: number;
+  contents?: BoxContentsData;
+  isAnalyzingContents?: boolean;
 }
 
 export default function App() {
@@ -169,6 +171,42 @@ export default function App() {
     }
   };
 
+  const contentsInputRef = useRef<HTMLInputElement>(null);
+  const [activeItemIdForContents, setActiveItemIdForContents] = useState<string | null>(null);
+
+  const handleCaptureContents = (itemId: string) => {
+    setActiveItemIdForContents(itemId);
+    contentsInputRef.current?.click();
+  };
+
+  const onContentsFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeItemIdForContents) return;
+
+    const itemId = activeItemIdForContents;
+    setActiveItemIdForContents(null);
+
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, isAnalyzingContents: true } : i));
+    addLog(`正在分析 ${file.name} 中的內容物...`);
+
+    try {
+      const base64 = await resizeImage(file);
+      const result = await analyzeBoxContents(base64, "image/jpeg", addLog);
+      
+      setItems(prev => prev.map(i => i.id === itemId ? { 
+        ...i, 
+        contents: result, 
+        isAnalyzingContents: false 
+      } : i));
+      
+      addLog(`已完成內容物分析，偵測到 ${result.items.length} 個項目。`);
+    } catch (error) {
+      console.error(error);
+      setItems(prev => prev.map(i => i.id === itemId ? { ...i, isAnalyzingContents: false } : i));
+      addLog("分析內容物時發生錯誤。");
+    }
+  };
+
   const reset = () => {
     setItems([]);
     setLogs([]);
@@ -195,7 +233,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
@@ -279,7 +317,7 @@ export default function App() {
                   {/* Result */}
                   <div className="lg:col-span-1">
                     {item.analysis ? (
-                      <AnalysisResult data={item.analysis} />
+                      <AnalysisResult data={item.analysis} contents={item.contents} />
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 border-2 border-dashed border-slate-100 rounded-xl">
                         <Box className="w-8 h-8 mb-2 opacity-20" />
@@ -322,9 +360,45 @@ export default function App() {
                           </td>
                           <td className="px-4 py-3 font-medium text-slate-900">
                             <div className="flex flex-col">
-                              <span>{item.analysis?.main_object.label}</span>
+                              <div className="flex items-center gap-2">
+                                <span>{item.analysis?.main_object.label}</span>
+                                {item.analysis?.main_object.is_cardboard && (
+                                  <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">紙箱</span>
+                                )}
+                              </div>
+                              
+                              {/* Contents Section */}
                               {item.analysis?.main_object.is_cardboard && (
-                                <span className="w-fit mt-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">紙箱</span>
+                                <div className="mt-2">
+                                  {item.contents ? (
+                                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                      <div className="flex items-center gap-1 text-[10px] text-slate-400 uppercase mb-1">
+                                        <ListChecks className="w-3 h-3" />
+                                        內容清單
+                                      </div>
+                                      <div className="flex flex-wrap gap-1">
+                                        {item.contents.items.map((contentItem, idx) => (
+                                          <span key={idx} className="text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-600">
+                                            {contentItem}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleCaptureContents(item.id)}
+                                      disabled={item.isAnalyzingContents}
+                                      className="flex items-center gap-1.5 text-[11px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                                    >
+                                      {item.isAnalyzingContents ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Camera className="w-3 h-3" />
+                                      )}
+                                      拍攝內容物
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>
@@ -408,6 +482,15 @@ export default function App() {
             <div ref={logsEndRef} />
           </div>
         </div>
+
+        {/* Hidden Inputs */}
+        <input
+          type="file"
+          ref={contentsInputRef}
+          className="hidden"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+          onChange={onContentsFileChange}
+        />
       </main>
     </div>
   );
