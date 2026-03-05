@@ -1,5 +1,5 @@
 import { Upload, X, Image as ImageIcon } from "lucide-react";
-import { useCallback, useState, DragEvent, MouseEvent } from "react";
+import { useCallback, useState, DragEvent, MouseEvent, useRef } from "react";
 import { cn } from "../lib/utils";
 
 interface ImageUploaderProps {
@@ -9,6 +9,7 @@ interface ImageUploaderProps {
 
 export function ImageUploader({ onImagesSelect, className }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFiles = useCallback(
     async (files: File[]) => {
@@ -68,15 +69,15 @@ export function ImageUploader({ onImagesSelect, className }: ImageUploaderProps)
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
-      onClick={() => document.getElementById("file-upload")?.click()}
+      onClick={() => fileInputRef.current?.click()}
     >
       <input
-        id="file-upload"
+        ref={fileInputRef}
+        id="file-upload-v2"
         type="file"
         className="hidden"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
         multiple
-        capture="environment"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
             processFiles(Array.from(e.target.files));
