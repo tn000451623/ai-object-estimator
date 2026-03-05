@@ -302,34 +302,36 @@ export default function App() {
                 <div className="p-3 border-b border-slate-100 bg-slate-50/50">
                   <h3 className="font-semibold text-slate-800 text-sm">估算結果清單</h3>
                 </div>
-                <div className="p-0 overflow-x-auto max-h-60 overflow-y-auto">
-                  <table className="w-full text-sm text-left text-slate-600">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100 sticky top-0">
+                <div className="p-0 overflow-x-auto max-h-80 overflow-y-auto scrollbar-thin">
+                  <table className="w-full text-sm text-left text-slate-600 min-w-[640px]">
+                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
                       <tr>
-                        <th className="px-4 py-2">縮圖</th>
-                        <th className="px-4 py-2">物體名稱</th>
-                        <th className="px-4 py-2">長度 (m)</th>
-                        <th className="px-4 py-2">寬度 (m)</th>
-                        <th className="px-4 py-2">高度 (m)</th>
-                        <th className="px-4 py-2">體積 (m³)</th>
+                        <th className="px-4 py-3 w-16">縮圖</th>
+                        <th className="px-4 py-3">物體名稱</th>
+                        <th className="px-4 py-3 text-right">長 (m)</th>
+                        <th className="px-4 py-3 text-right">寬 (m)</th>
+                        <th className="px-4 py-3 text-right">高 (m)</th>
+                        <th className="px-4 py-3 text-right">體積 (m³)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {successfulItems.map((item) => (
-                        <tr key={`summary-${item.id}`} className="border-b border-slate-50 hover:bg-slate-50/50">
-                          <td className="px-4 py-2">
-                            <img src={`data:${item.file.type};base64,${item.base64}`} alt="thumbnail" className="w-10 h-10 object-cover rounded-md border border-slate-200" />
+                        <tr key={`summary-${item.id}`} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                          <td className="px-4 py-3">
+                            <img src={`data:${item.file.type};base64,${item.base64}`} alt="thumbnail" className="w-10 h-10 object-cover rounded-md border border-slate-200 shadow-sm" />
                           </td>
-                          <td className="px-4 py-2 font-medium text-slate-900">
-                            {item.analysis?.main_object.label}
-                            {item.analysis?.main_object.is_cardboard && (
-                              <span className="ml-2 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">紙箱</span>
-                            )}
+                          <td className="px-4 py-3 font-medium text-slate-900">
+                            <div className="flex flex-col">
+                              <span>{item.analysis?.main_object.label}</span>
+                              {item.analysis?.main_object.is_cardboard && (
+                                <span className="w-fit mt-1 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">紙箱</span>
+                              )}
+                            </div>
                           </td>
-                          <td className="px-4 py-2">{item.analysis?.main_object.dimensions_m.length.toFixed(3)}</td>
-                          <td className="px-4 py-2">{item.analysis?.main_object.dimensions_m.width.toFixed(3)}</td>
-                          <td className="px-4 py-2">{item.analysis?.main_object.dimensions_m.height.toFixed(3)}</td>
-                          <td className="px-4 py-2 font-semibold text-indigo-600">{item.analysis?.main_object.volume_m3.toFixed(4)}</td>
+                          <td className="px-4 py-3 text-right font-mono">{item.analysis?.main_object.dimensions_m.length.toFixed(3)}</td>
+                          <td className="px-4 py-3 text-right font-mono">{item.analysis?.main_object.dimensions_m.width.toFixed(3)}</td>
+                          <td className="px-4 py-3 text-right font-mono">{item.analysis?.main_object.dimensions_m.height.toFixed(3)}</td>
+                          <td className="px-4 py-3 text-right font-mono font-bold text-indigo-600">{item.analysis?.main_object.volume_m3.toFixed(4)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -338,27 +340,27 @@ export default function App() {
               </div>
             )}
 
-            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-end justify-between">
-              <div className="w-full lg:w-auto flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="flex gap-4 col-span-1 md:col-span-4">
-                   <div className="flex-1 px-4 py-3 bg-slate-100 rounded-xl text-slate-600 font-mono font-medium flex flex-col justify-center h-[50px] self-end">
-                      <span className="text-[10px] uppercase text-slate-400 leading-none mb-1">總體積</span>
-                      <span className="leading-none text-indigo-600 font-bold">{totalVolume.toFixed(4)} m³</span>
+            <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:items-end justify-between">
+              <div className="w-full flex-1 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="px-4 py-3 bg-slate-100 rounded-xl text-slate-600 font-mono font-medium flex flex-col justify-center min-h-[60px]">
+                    <span className="text-[10px] uppercase text-slate-400 leading-none mb-1.5">總體積</span>
+                    <span className="text-lg text-indigo-600 font-bold">{totalVolume.toFixed(4)} m³</span>
+                  </div>
+                  <div className="px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-800 font-medium flex flex-col justify-center min-h-[60px]">
+                    <span className="text-[10px] uppercase text-indigo-500 leading-none mb-1.5">建議搬家車型</span>
+                    <span className="text-sm font-bold">{getRecommendedVehicle(totalVolume)}</span>
+                  </div>
+                  <div className="px-4 py-3 bg-slate-100 rounded-xl text-slate-600 font-mono font-medium text-center flex flex-col justify-center min-h-[60px]">
+                    <span className="text-[10px] uppercase text-slate-400 leading-none mb-1.5">估算總數</span>
+                    <span className="text-lg text-indigo-600 font-bold">{totalCount}</span>
+                  </div>
+                  {elapsedTime !== null && (
+                    <div className="px-4 py-3 bg-slate-100 rounded-xl text-slate-600 font-mono font-medium text-center flex flex-col justify-center min-h-[60px]">
+                      <span className="text-[10px] uppercase text-slate-400 leading-none mb-1.5">總耗時</span>
+                      <span className="text-lg font-bold">{elapsedTime.toFixed(1)}s</span>
                     </div>
-                    <div className="flex-1 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-800 font-medium flex flex-col justify-center h-[50px] self-end">
-                      <span className="text-[10px] uppercase text-indigo-500 leading-none mb-1">建議搬家車型</span>
-                      <span className="leading-none font-bold">{getRecommendedVehicle(totalVolume)}</span>
-                    </div>
-                    <div className="px-4 py-3 bg-slate-100 rounded-xl text-slate-600 font-mono font-medium min-w-[80px] text-center flex flex-col justify-center h-[50px] self-end hidden sm:flex">
-                      <span className="text-[10px] uppercase text-slate-400 leading-none mb-1">估算總數</span>
-                      <span className="leading-none text-indigo-600 font-bold">{totalCount}</span>
-                    </div>
-                    {elapsedTime !== null && (
-                      <div className="px-4 py-3 bg-slate-100 rounded-xl text-slate-600 font-mono font-medium min-w-[80px] text-center flex flex-col justify-center h-[50px] self-end hidden sm:flex">
-                        <span className="text-[10px] uppercase text-slate-400 leading-none mb-1">總耗時</span>
-                        <span className="leading-none">{elapsedTime.toFixed(1)}s</span>
-                      </div>
-                    )}
+                  )}
                 </div>
               </div>
 
